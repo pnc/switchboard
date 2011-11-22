@@ -37,13 +37,14 @@ stop() ->
 
 loop(Req) ->
     Path = Req:get(path),
+    Qs = Req:parse_qs(),
     try
         case string:tokens(Path, "/") of
             ["parse" | RestOfPath] ->
-                Qs = Req:parse_qs(),
                 io:format("Got some stuff: ~p~n", [Qs]),
                 io:format("Specifically: ~p~n", [proplists:get_value("foo", Qs)]);
             ["longpoll" | RestOfPath] ->
+                Token = proplists:get_value("token", Qs),
                 %% the "reentry" is a continuation -- what @mochiweb_http@
                 %% needs to do to start its loop back at the top
                 Reentry = mochiweb_http:reentry(?LOOP),
@@ -52,7 +53,7 @@ loop(Req) ->
                 %% to get an interesting message back after a while.  for
                 %% simplicity let's just send ourselves a message after a few
                 %% seconds
-                batcher ! {send_notification, self(), "push it"},
+                batcher ! {send_notification, self(), [{token, Token}]},
                 %%batcher ! flush,
             
                 io:format("queued~n", []),

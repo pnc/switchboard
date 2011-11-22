@@ -28,11 +28,14 @@ receiver(PushSocket) ->
 flush_it_bro(PushSocket, Batch) ->
     receive
         {send_notification, Sender_PID, Notification} ->
-            %Status = apns_notifications:send(PushSocket),
-            Status = socket_closed,
+            Status = apns_notifications:send(PushSocket, Notification),
             case Status of
-                socket_closed ->
-                    RefreshedPushSocket = PushSocket * 2;
+                {error, closed} ->
+                    io:format("Reconnecting to Apple.~n", []),
+                    {ok, RefreshedPushSocket} = apns_notifications:connect(),
+                    % HACK: This makes the pretty gross assumption that it
+                    %       succeeds.
+                    apns_notifications:send(RefreshedPushSocket, Notification);
                 _Else ->
                     RefreshedPushSocket = PushSocket
             end,

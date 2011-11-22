@@ -1,14 +1,8 @@
 -module(apns_notifications).
--export([send_notification/0, recv/1]).
+-export([ send/2, recv/1, connect/0 ]).
 -import(hex).
 
 connect() ->
-    {ok, Socket}.
-
-prepare_packet(Payload) ->
-    ok.
-
-send_notification() ->
     Address = "gateway.sandbox.push.apple.com",
     Port = 2195,
     Cert = "keys/apns-dev-cert.pem",
@@ -17,18 +11,23 @@ send_notification() ->
     %Options = [{cacertfile, CaCert}, {certfile, Cert}, {keyfile, Key}, {mode, binary}],
     Options = [{certfile, Cert}, {keyfile, Key}, {mode, binary}],
     Timeout = 1000,
-    % What if we can't connect?
-    {ok, Socket} = ssl:connect(Address, Port, Options, Timeout),
+    % What if we can't connect? {ok, Socket}
+    {Status, Socket} = ssl:connect(Address, Port, Options, Timeout),
     
+    % We should take a PID for error feedback.
     Pid = self(),
     ssl:controlling_process(Socket, spawn(fun() -> ?MODULE:recv(Pid) end)),
     
+    {Status, Socket}.
+
+prepare_packet(Notification) ->
     Payload = mochijson:encode({struct, [{"aps", {struct, [{"alert", "Call Brandon."}, {"sound", "default"}]}}, {"number", "8643897005"}]}),
     io:format("Message: ~s", [Payload]),
     BPayload = erlang:list_to_binary(Payload),
     PayloadLen = erlang:byte_size(BPayload),
     %last char 8
-    Token = "5f2c2e77356ff2116e32ef5bb7c9fd7a50f27f19988b180401af7d72181ba9a9",
+    %Token = "5f2c2e77356ff2116e32ef5bb7c9fd7a50f27f19988b180401af7d72181ba9a8",
+    Token = proplists:get_value(token, Notification),
     BToken = hex:hexstr_to_bin(Token),
     BTokenLength = erlang:byte_size(BToken),
     
@@ -36,8 +35,10 @@ send_notification() ->
     {MSeconds,Seconds,_} = erlang:now(),
     Expiry = MSeconds * 1000000 + Seconds + 3600*1,
     
-    Packet = <<1:8, SomeID:32/big, Expiry:32/big, BTokenLength:16/big, BToken/binary, PayloadLen:16/big, BPayload/binary>>,
-    
+    <<1:8, SomeID:32/big, Expiry:32/big, BTokenLength:16/big, BToken/binary, PayloadLen:16/big, BPayload/binary>>.
+
+send(Socket, Notification) ->
+    Packet = prepare_packet(Notification),
     ssl:send(Socket, Packet).
     %ssl:close(Socket).
   
@@ -48,7 +49,7 @@ recv(Parent) ->
        {ssl, Sock, <<Command, Status, SomeID:32/big>>} ->
            error_logger:error_msg("Received",
                                   [Command, Status, SomeID]),
-           ssl:close(Sock),
-           Parent ! {error, SomeID}; % notify parent
+           ssl:close(Sock);
+           %Parent ! {error, SomeID}; % notify parent
       {ssl_closed, _Sock} -> ok  %
    end.
