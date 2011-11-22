@@ -2,11 +2,17 @@
 -export([send_notification/0, recv/1]).
 -import(hex).
 
+connect() ->
+    {ok, Socket}.
+
+prepare_packet(Payload) ->
+    ok.
+
 send_notification() ->
     Address = "gateway.sandbox.push.apple.com",
     Port = 2195,
-    Cert = "../keys/apns-dev-cert.pem",
-    Key = "../keys/apns-dev-key-noenc.pem",  
+    Cert = "keys/apns-dev-cert.pem",
+    Key = "keys/apns-dev-key-noenc.pem",  
 
     %Options = [{cacertfile, CaCert}, {certfile, Cert}, {keyfile, Key}, {mode, binary}],
     Options = [{certfile, Cert}, {keyfile, Key}, {mode, binary}],
