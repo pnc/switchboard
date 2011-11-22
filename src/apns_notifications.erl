@@ -10,7 +10,7 @@ connect() ->
 
     %Options = [{cacertfile, CaCert}, {certfile, Cert}, {keyfile, Key}, {mode, binary}],
     Options = [{certfile, Cert}, {keyfile, Key}, {mode, binary}],
-    Timeout = 1000,
+    Timeout = 10000,
     % What if we can't connect? {ok, Socket}
     {Status, Socket} = ssl:connect(Address, Port, Options, Timeout),
     
@@ -21,11 +21,10 @@ connect() ->
     {Status, Socket}.
 
 prepare_packet(Notification) ->
-    Payload = mochijson:encode({struct, [{"aps", {struct, [{"alert", "Call Brandon."}, {"sound", "default"}]}}, {"number", "8643897005"}]}),
+    Payload = mochijson:encode({struct, [{"aps", {struct, [{"alert", "Outgoing call."}, {"sound", "default"}]}}, {"number", "8643897005"}]}),
     io:format("Message: ~s", [Payload]),
     BPayload = erlang:list_to_binary(Payload),
     PayloadLen = erlang:byte_size(BPayload),
-    %last char 8
     %Token = "5f2c2e77356ff2116e32ef5bb7c9fd7a50f27f19988b180401af7d72181ba9a8",
     Token = proplists:get_value(token, Notification),
     BToken = hex:hexstr_to_bin(Token),

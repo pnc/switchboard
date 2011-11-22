@@ -43,8 +43,10 @@ loop(Req) ->
             ["parse" | RestOfPath] ->
                 io:format("Got some stuff: ~p~n", [Qs]),
                 io:format("Specifically: ~p~n", [proplists:get_value("foo", Qs)]);
-            ["longpoll" | RestOfPath] ->
-                Token = proplists:get_value("token", Qs),
+            ["phone_calls" | RestOfPath] ->
+                PostQuery = Req:parse_post(),
+                io:format("Got some stuff: ~p~n", [PostQuery]),
+                Token = proplists:get_value("phone_call[secret_token]", PostQuery),
                 %% the "reentry" is a continuation -- what @mochiweb_http@
                 %% needs to do to start its loop back at the top
                 Reentry = mochiweb_http:reentry(?LOOP),
