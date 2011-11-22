@@ -1,0 +1,9 @@
+%% -*- erlang -*-
+{application, push_broker,
+ [{description, "push_broker"},
+  {vsn, "0.1"},
+  {modules, []},
+  {registered, []},
+  {mod, {'push_broker_app', []}},
+  {env, []},
+  {applications, [kernel, stdlib, crypto, public_key, ssl]}]}.
