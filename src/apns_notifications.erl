@@ -1,12 +1,13 @@
 -module(apns_notifications).
 -export([ send/2, recv/1, connect/0 ]).
 -import(hex).
+-import(mochihex).
 
 connect() ->
-    Address = "gateway.sandbox.push.apple.com",
+    {ok, Address} = application:get_env(apns_host), %"gateway.sandbox.push.apple.com",
     Port = 2195,
-    Cert = "keys/apns-dev-cert.pem",
-    Key = "keys/apns-dev-key-noenc.pem",  
+    {ok, Cert} = application:get_env(apns_certfile), %"keys/apns-dev-cert.pem",
+    {ok, Key} = application:get_env(apns_keyfile), %"keys/apns-dev-key-noenc.pem",  
 
     %Options = [{cacertfile, CaCert}, {certfile, Cert}, {keyfile, Key}, {mode, binary}],
     Options = [{certfile, Cert}, {keyfile, Key}, {mode, binary}],

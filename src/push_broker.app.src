@@ -5,5 +5,7 @@
   {modules, []},
   {registered, []},
   {mod, {'push_broker_app', []}},
-  {env, []},
+  {env, [{apns_host, "gateway.sandbox.push.apple.com"},
+         {apns_certfile, "keys/apns-dev-cert.pem"},
+         {apns_keyfile, "keys/apns-dev-key-noenc.pem"}]},
   {applications, [kernel, stdlib, crypto, public_key, ssl]}]}.
