@@ -47,22 +47,20 @@ loop(Req) ->
                 PostQuery = Req:parse_post(),
                 io:format("Got some stuff: ~p~n", [PostQuery]),
                 Token = proplists:get_value("phone_call[secret_token]", PostQuery),
+                Alert = proplists:get_value("phone_call[alert]", PostQuery),
+                Data = proplists:get_value("phone_call[data]", PostQuery),
+
                 %% the "reentry" is a continuation -- what @mochiweb_http@
                 %% needs to do to start its loop back at the top
                 Reentry = mochiweb_http:reentry(?LOOP),
-            
-                %% here we could send a message to some other process and hope
-                %% to get an interesting message back after a while.  for
-                %% simplicity let's just send ourselves a message after a few
-                %% seconds
-                batcher ! {send_notification, self(), [{token, Token}]},
-                %%batcher ! flush,
+
+                batcher ! {send_notification, self(), [{token, Token}, {alert, Alert}, {user_info, {"number", Data}}]},
             
                 io:format("queued~n", []),
             
                 Response = Req:respond({200, [{"Content-Type", "text/plain"}], chunked}),
             
-                Text = io_lib:format("finished~n~n", []),
+                Text = io_lib:format("NOTIFICATION_QUEUED~n~n", []),
                 Response:write_chunk(Text),
             
                 %% since we expect to wait for a long time before getting a
@@ -99,7 +97,7 @@ resume(Req, Response, RestOfPath, Reentry) ->
     receive
         notification_sent ->
             io:format("i guess it sent", []),
-            Text = io_lib:format("finished~n~n", []),
+            Text = io_lib:format("NOTIFICATION_SENT~n~n", []),
             Response:write_chunk(Text),
             Response:write_chunk(<<>>),
             %% if we didn't call @Reentry@ here then the function would finish and the

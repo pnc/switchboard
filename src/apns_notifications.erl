@@ -22,13 +22,22 @@ connect() ->
     {Status, Socket}.
 
 prepare_packet(Notification) ->
-    Payload = mochijson:encode({struct, [{"aps", {struct, [{"alert", "Outgoing call."}, {"sound", "default"}]}}, {"number", "8643897005"}]}),
+    Token = proplists:get_value(token, Notification),
+    AlertText = proplists:get_value(alert, Notification),
+    UserInfoValue = proplists:get_value(user_info, Notification),
+    UserInfo = case UserInfoValue of
+        undefined ->
+            {};
+        _Else ->
+            UserInfoValue
+    end,
+    Payload = mochijson:encode({struct, [{"aps", {struct, [{"alert", AlertText}, {"sound", "default"}]}}, UserInfo]}),
     io:format("Message: ~s", [Payload]),
     BPayload = erlang:list_to_binary(Payload),
     PayloadLen = erlang:byte_size(BPayload),
     %Token = "5f2c2e77356ff2116e32ef5bb7c9fd7a50f27f19988b180401af7d72181ba9a8",
-    Token = proplists:get_value(token, Notification),
-    BToken = hex:hexstr_to_bin(Token),
+    %Token = proplists:get_value(token, Notification),
+    BToken = mochihex:to_bin(Token),
     BTokenLength = erlang:byte_size(BToken),
     
     SomeID= 1,
